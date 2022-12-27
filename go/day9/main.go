@@ -51,16 +51,28 @@ func applyHeadMove(direction string, head *Location) {
 	}
 }
 
-func printRope(rope [][]string, head Location, tail Location) {
+func printRope(rope [][]string, head Location, tails []Location) {
 	for i := 0; i < len(rope); i++ {
 		for j := 0; j < len(rope); j++ {
+			printedChar := false
 			if head.row == i && head.col == j {
 				fmt.Printf("H ")
-			} else if i == tail.row && j == tail.col {
-				fmt.Printf("T ")
-			} else if i == head.startRow && j == head.startCol {
+				printedChar = true
+			}
+			if printedChar == false {
+				for t := 0; t < len(tails); t++ {
+					if tails[t].row == i && tails[t].col == j {
+						fmt.Printf("%d ", t+1)
+						printedChar = true
+						break
+					}
+				}
+			}
+			if printedChar == false && i == head.startRow && j == head.startCol {
 				fmt.Printf("s ")
-			} else {
+				printedChar = true
+			}
+			if printedChar == false {
 				fmt.Printf(". ")
 			}
 		}
@@ -107,6 +119,7 @@ func applyTailFollow(head *Location, tail *Location) {
 		} else {
 			tail.row -= 1
 		}
+		return
 	}
 	/*
 		    diagonal 1 motion when:
@@ -132,6 +145,27 @@ func applyTailFollow(head *Location, tail *Location) {
 		} else {
 			tail.col -= 1
 		}
+		return
+	}
+	/*
+		    diagonal 1 motion when:
+			   . . H
+			   . . .
+			   T . .
+	*/
+	if math.Abs(float64(head.row-tail.row)) == 2 &&
+		math.Abs(float64(head.col-tail.col)) == 2 {
+		if head.row > tail.row {
+			tail.row += 1
+		} else {
+			tail.row -= 1
+		}
+		if head.col > tail.col {
+			tail.col += 1
+		} else {
+			tail.col -= 1
+		}
+		return
 	}
 }
 
@@ -156,6 +190,7 @@ func main() {
 	fileScanner.Split(bufio.ScanLines)
 
 	const ropeSize = 1001
+	const startPos = (ropeSize - 1) / 2
 	rope := make([][]string, ropeSize)
 	for i := 0; i < len(rope); i++ {
 		rope[i] = make([]string, ropeSize)
@@ -164,19 +199,25 @@ func main() {
 	for i := 0; i < len(tailTracker); i++ {
 		tailTracker[i] = make([]int, ropeSize)
 	}
-	head := Location{500, 500, 500, 500}
-	tail := Location{500, 500, 500, 500}
-	tailTracker[tail.row][tail.col] += 1
+	head := Location{startPos, startPos, startPos, startPos}
+	tails := make([]Location, 9)
+	for i := 0; i < 9; i++ {
+		tails[i] = Location{startPos, startPos, startPos, startPos}
+	}
+	tailTracker[tails[8].row][tails[8].col] += 1
 
-	// printRope(rope, head, tail)
+	// printRope(rope, head, tails)
 	for fileScanner.Scan() {
 		line := fileScanner.Text()
 		direction, count := parseLine(line)
 		for i := 0; i < count; i++ {
 			applyHeadMove(direction, &head)
-			applyTailFollow(&head, &tail)
-			tailTracker[tail.row][tail.col] += 1
-			// printRope(rope, head, tail)
+			applyTailFollow(&head, &tails[0])
+			for i := 1; i < 9; i++ {
+				applyTailFollow(&tails[i-1], &tails[i])
+			}
+			tailTracker[tails[8].row][tails[8].col] += 1
+			// printRope(rope, head, tails)
 		}
 	}
 	fmt.Println(countTailVisits(tailTracker))
