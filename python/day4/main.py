@@ -52,5 +52,5 @@ with open("input.txt") as f:
                 CARDS[card.card_no + j + 1] += 1
 
 
-print(f"For part 1: {score_sum=}")
+print(f"For part 1: {score_sum}")
 print(f"For part 2: {sum(CARDS.values())}")
